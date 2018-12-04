@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const knex = require('../knex')
+const knex = require('../knex');
+const validate = require('express-validation')
+const validation = require('../validations/signup')
 
 //Get all user data
 router.get('/users', (req, res, next) => {
@@ -11,16 +13,24 @@ router.get('/users', (req, res, next) => {
 })
 
 //New user signup
-router.post('/signup', function(req, res, next) {
+router.post('/signup', validate(validation.signup), function(req, res, next) {
   const { first_name, last_name, email, password } = req.body
 
   if (first_name && last_name && email && password) {
     return knex('users')
-    .where('email', req.body.email)
+    .where('email', email)
     .first()
     .then(exists => {
       if(exists) {
-        res.status(400).send({error: 'That email is already registered.'})
+        next({
+          status: 400,
+          errors: [
+            {
+              messages: [
+                'that email is already registered'
+              ]
+            }]
+          })
       } else {
         return knex('users')
         .insert({first_name, last_name, email, password})
@@ -29,10 +39,11 @@ router.post('/signup', function(req, res, next) {
         })
       }
     })
-  } else {
-    res.status(400).send({error: 'Please include all fields.'})
   }
 })
 
+router.use(function(err, req, res, next) {
+  res.status(err.status).send(err)
+})
 
 module.exports = router;

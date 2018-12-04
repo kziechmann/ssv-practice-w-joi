@@ -38,7 +38,14 @@ document.addEventListener('DOMContentLoaded', function(){
       //Unsuccessful POST request, append error text
       .fail(result => {
         $('#error-text').empty()
-        $('#error-text').append(`<h5>${result.responseJSON.error}</h5>`)
+        const errors = result.responseJSON.errors
+        errors.forEach(error => {
+          const messages = error.messages
+          messages.forEach(message => {
+            const errorText = message.split('"').join('').split('_').join(' ')
+            $('#error-text').append(`<h5>${errorText}.</h5>`)
+          })
+        })
       })
   })
 
